@@ -38,4 +38,8 @@ public class AccountService {
         accountRepository.persist(createdAccount);
         return createdAccount;
     }
+
+    public Optional<Account> findByAuth0Id(String auth0Id) {
+        return accountRepository.findByAuth0Id(auth0Id);
+    }
 }
