@@ -113,9 +113,13 @@ public class ClosetService {
             throw new SecurityException("You do not own this closet");
         }
 
-        // Verify gear exists
-        gearService.getGearById(gearId)
+        // Verify gear exists and is owned by user
+        Gear gear = gearService.getGearById(gearId)
                 .orElseThrow(() -> new IllegalArgumentException("Gear not found"));
+        
+        if (!gear.getOwnerId().equals(account.getId())) {
+            throw new SecurityException("You do not own this gear");
+        }
 
         closetGearRepository.addGearToCloset(closetId, gearId, quantity);
     }

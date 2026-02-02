@@ -113,9 +113,13 @@ public class PackService {
             throw new SecurityException("You do not own this pack");
         }
 
-        // Verify gear exists
-        gearService.getGearById(gearId)
+        // Verify gear exists and is owned by user
+        Gear gear = gearService.getGearById(gearId)
                 .orElseThrow(() -> new IllegalArgumentException("Gear not found"));
+        
+        if (!gear.getOwnerId().equals(account.getId())) {
+            throw new SecurityException("You do not own this gear");
+        }
 
         packGearRepository.addGearToPack(packId, gearId, quantity);
     }

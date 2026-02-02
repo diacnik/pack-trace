@@ -2,8 +2,10 @@ package com.packtrace.resource;
 
 import com.packtrace.dto.GearRequest;
 import com.packtrace.dto.GearResponse;
+import com.packtrace.model.Account;
 import com.packtrace.model.Gear;
 import com.packtrace.mapper.GearMapper;
+import com.packtrace.service.AccountService;
 import com.packtrace.service.GearService;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
@@ -23,6 +25,9 @@ public class GearResource {
     GearService gearService;
 
     @Inject
+    AccountService accountService;
+
+    @Inject
     JsonWebToken jwt;
 
     @GET
@@ -40,15 +45,24 @@ public class GearResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGearById(@PathParam("id") Long id) {
         String auth0Id = jwt.getSubject();
-        try {
-            return gearService.getGearById(id)
-                    .map(gear -> Response.ok(GearMapper.toResponse(gear)).build())
-                    .orElse(Response.status(Response.Status.NOT_FOUND).build());
-        } catch (SecurityException e) {
+        Account account = accountService.findByAuth0Id(auth0Id)
+                .orElse(null);
+        if (account == null) {
             return Response.status(Response.Status.FORBIDDEN)
-                    .entity(new ErrorResponse(e.getMessage()))
+                    .entity(new ErrorResponse("Account not found"))
                     .build();
         }
+        
+        return gearService.getGearById(id)
+                .map(gear -> {
+                    if (!gear.getOwnerId().equals(account.getId())) {
+                        return Response.status(Response.Status.FORBIDDEN)
+                                .entity(new ErrorResponse("You do not own this gear"))
+                                .build();
+                    }
+                    return Response.ok(GearMapper.toResponse(gear)).build();
+                })
+                .orElse(Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @POST
