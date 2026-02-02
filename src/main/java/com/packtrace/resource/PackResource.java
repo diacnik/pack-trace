@@ -4,6 +4,7 @@ import com.packtrace.dto.PackGearRequest;
 import com.packtrace.dto.PackGearResponse;
 import com.packtrace.dto.PackRequest;
 import com.packtrace.dto.PackResponse;
+import com.packtrace.model.Pack;
 import com.packtrace.mapper.PackMapper;
 import com.packtrace.service.PackService;
 import io.quarkus.security.Authenticated;
@@ -51,8 +52,8 @@ public class PackResource {
     public Response createPack(@Valid PackRequest request) {
         String auth0Id = jwt.getSubject();
         try {
-            var pack = PackMapper.toEntity(request);
-            var createdPack = packService.createPack(auth0Id, pack);
+            Pack pack = PackMapper.toEntity(request);
+            Pack createdPack = packService.createPack(auth0Id, pack);
             return Response.status(Response.Status.CREATED)
                     .entity(PackMapper.toResponse(createdPack))
                     .build();
@@ -70,8 +71,8 @@ public class PackResource {
     public Response updatePack(@PathParam("id") Long id, @Valid PackRequest request) {
         String auth0Id = jwt.getSubject();
         try {
-            var pack = PackMapper.toEntity(request);
-            var updatedPack = packService.updatePack(id, pack, auth0Id);
+            Pack pack = PackMapper.toEntity(request);
+            Pack updatedPack = packService.updatePack(id, pack, auth0Id);
             return Response.ok(PackMapper.toResponse(updatedPack)).build();
         } catch (SecurityException e) {
             return Response.status(Response.Status.FORBIDDEN)

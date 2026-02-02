@@ -4,6 +4,7 @@ import com.packtrace.dto.ClosetGearRequest;
 import com.packtrace.dto.ClosetGearResponse;
 import com.packtrace.dto.ClosetRequest;
 import com.packtrace.dto.ClosetResponse;
+import com.packtrace.model.Closet;
 import com.packtrace.mapper.ClosetMapper;
 import com.packtrace.service.ClosetService;
 import io.quarkus.security.Authenticated;
@@ -51,8 +52,8 @@ public class ClosetResource {
     public Response createCloset(@Valid ClosetRequest request) {
         String auth0Id = jwt.getSubject();
         try {
-            var closet = ClosetMapper.toEntity(request);
-            var createdCloset = closetService.createCloset(auth0Id, closet);
+            Closet closet = ClosetMapper.toEntity(request);
+            Closet createdCloset = closetService.createCloset(auth0Id, closet);
             return Response.status(Response.Status.CREATED)
                     .entity(ClosetMapper.toResponse(createdCloset))
                     .build();
@@ -70,8 +71,8 @@ public class ClosetResource {
     public Response updateCloset(@PathParam("id") Long id, @Valid ClosetRequest request) {
         String auth0Id = jwt.getSubject();
         try {
-            var closet = ClosetMapper.toEntity(request);
-            var updatedCloset = closetService.updateCloset(id, closet, auth0Id);
+            Closet closet = ClosetMapper.toEntity(request);
+            Closet updatedCloset = closetService.updateCloset(id, closet, auth0Id);
             return Response.ok(ClosetMapper.toResponse(updatedCloset)).build();
         } catch (SecurityException e) {
             return Response.status(Response.Status.FORBIDDEN)

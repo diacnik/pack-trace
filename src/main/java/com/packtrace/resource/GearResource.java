@@ -2,6 +2,7 @@ package com.packtrace.resource;
 
 import com.packtrace.dto.GearRequest;
 import com.packtrace.dto.GearResponse;
+import com.packtrace.model.Gear;
 import com.packtrace.mapper.GearMapper;
 import com.packtrace.service.GearService;
 import io.quarkus.security.Authenticated;
@@ -48,8 +49,8 @@ public class GearResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createGear(@Valid GearRequest request) {
         String auth0Id = jwt.getSubject();
-        var gear = GearMapper.toEntity(request);
-        var createdGear = gearService.createGear(auth0Id, gear);
+        Gear gear = GearMapper.toEntity(request);
+        Gear createdGear = gearService.createGear(auth0Id, gear);
         return Response.status(Response.Status.CREATED)
                 .entity(GearMapper.toResponse(createdGear))
                 .build();
@@ -62,8 +63,8 @@ public class GearResource {
     public Response updateGear(@PathParam("id") Long id, @Valid GearRequest request) {
         String auth0Id = jwt.getSubject();
         try {
-            var gear = GearMapper.toEntity(request);
-            var updatedGear = gearService.updateGear(id, gear, auth0Id);
+            Gear gear = GearMapper.toEntity(request);
+            Gear updatedGear = gearService.updateGear(id, gear, auth0Id);
             return Response.ok(GearMapper.toResponse(updatedGear)).build();
         } catch (SecurityException e) {
             return Response.status(Response.Status.FORBIDDEN)
