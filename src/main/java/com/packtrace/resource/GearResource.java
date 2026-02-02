@@ -39,9 +39,16 @@ public class GearResource {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGearById(@PathParam("id") Long id) {
-        return gearService.getGearById(id)
-                .map(gear -> Response.ok(GearMapper.toResponse(gear)).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build());
+        String auth0Id = jwt.getSubject();
+        try {
+            return gearService.getGearById(id)
+                    .map(gear -> Response.ok(GearMapper.toResponse(gear)).build())
+                    .orElse(Response.status(Response.Status.NOT_FOUND).build());
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
     }
 
     @POST
@@ -49,11 +56,17 @@ public class GearResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createGear(@Valid GearRequest request) {
         String auth0Id = jwt.getSubject();
-        Gear gear = GearMapper.toEntity(request);
-        Gear createdGear = gearService.createGear(auth0Id, gear);
-        return Response.status(Response.Status.CREATED)
-                .entity(GearMapper.toResponse(createdGear))
-                .build();
+        try {
+            Gear gear = GearMapper.toEntity(request);
+            Gear createdGear = gearService.createGear(auth0Id, gear);
+            return Response.status(Response.Status.CREATED)
+                    .entity(GearMapper.toResponse(createdGear))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
     }
 
     @PUT
