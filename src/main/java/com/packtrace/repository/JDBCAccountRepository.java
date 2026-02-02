@@ -22,7 +22,7 @@ public class JDBCAccountRepository implements AccountRepository{
     @Override
     public Optional<Account> findByAuth0Id(String auth0Id) {
         String sql = """
-                SELECT id, auth0_id, name, bio
+                SELECT id, auth0_id, username, bio
                 FROM account
                 WHERE auth0_id = ?;
                 """;
@@ -68,9 +68,9 @@ public class JDBCAccountRepository implements AccountRepository{
     @Override
     public List<String> findAllUsernamesStartingWith(String prefix) {
         String sql = """
-                SELECT name
+                SELECT username
                 FROM account
-                WHERE name = ? OR name LIKE ?;
+                WHERE username = ? OR username LIKE ?;
                 """;
         List<String> usernames = new ArrayList<>();
 
@@ -82,7 +82,7 @@ public class JDBCAccountRepository implements AccountRepository{
 
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next())
-                    usernames.add(resultSet.getString("name"));
+                    usernames.add(resultSet.getString("username"));
             }
 
         } catch (SQLException sqlException) {

@@ -1,0 +1,168 @@
+package com.packtrace.resource;
+
+import com.packtrace.dto.PackGearRequest;
+import com.packtrace.dto.PackGearResponse;
+import com.packtrace.dto.PackRequest;
+import com.packtrace.dto.PackResponse;
+import com.packtrace.mapper.PackMapper;
+import com.packtrace.service.PackService;
+import io.quarkus.security.Authenticated;
+import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import org.eclipse.microprofile.jwt.JsonWebToken;
+
+import java.util.List;
+
+@Path("/pack")
+@Authenticated
+public class PackResource {
+
+    @Inject
+    PackService packService;
+
+    @Inject
+    JsonWebToken jwt;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<PackResponse> getMyPacks() {
+        String auth0Id = jwt.getSubject();
+        return packService.getMyPacks(auth0Id)
+                .stream()
+                .map(PackMapper::toResponse)
+                .toList();
+    }
+
+    @GET
+    @Path("/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getPackById(@PathParam("id") Long id) {
+        return packService.getPackById(id)
+                .map(pack -> Response.ok(PackMapper.toResponse(pack)).build())
+                .orElse(Response.status(Response.Status.NOT_FOUND).build());
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createPack(@Valid PackRequest request) {
+        String auth0Id = jwt.getSubject();
+        try {
+            var pack = PackMapper.toEntity(request);
+            var createdPack = packService.createPack(auth0Id, pack);
+            return Response.status(Response.Status.CREATED)
+                    .entity(PackMapper.toResponse(createdPack))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
+    }
+
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updatePack(@PathParam("id") Long id, @Valid PackRequest request) {
+        String auth0Id = jwt.getSubject();
+        try {
+            var pack = PackMapper.toEntity(request);
+            var updatedPack = packService.updatePack(id, pack, auth0Id);
+            return Response.ok(PackMapper.toResponse(updatedPack)).build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deletePack(@PathParam("id") Long id) {
+        String auth0Id = jwt.getSubject();
+        try {
+            packService.deletePack(id, auth0Id);
+            return Response.noContent().build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
+    }
+
+    @GET
+    @Path("/{id}/gear")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<PackGearResponse> getPackGear(@PathParam("id") Long packId) {
+        return packService.getPackGear(packId);
+    }
+
+    @POST
+    @Path("/{id}/gear")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response addGearToPack(@PathParam("id") Long packId, @Valid PackGearRequest request) {
+        String auth0Id = jwt.getSubject();
+        try {
+            packService.addGearToPack(packId, request.gearId(), request.quantity(), auth0Id);
+            return Response.status(Response.Status.CREATED).build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
+    }
+
+    @DELETE
+    @Path("/{id}/gear/{gearId}")
+    public Response removeGearFromPack(@PathParam("id") Long packId, @PathParam("gearId") Long gearId) {
+        String auth0Id = jwt.getSubject();
+        try {
+            packService.removeGearFromPack(packId, gearId, auth0Id);
+            return Response.noContent().build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
+    }
+
+    @PUT
+    @Path("/{id}/gear/{gearId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updatePackGearQuantity(@PathParam("id") Long packId, @PathParam("gearId") Long gearId, 
+                                           @Valid PackGearRequest request) {
+        String auth0Id = jwt.getSubject();
+        try {
+            packService.updatePackGearQuantity(packId, gearId, request.quantity(), auth0Id);
+            return Response.ok().build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
+    }
+
+    public record ErrorResponse(String message) {}
+}
