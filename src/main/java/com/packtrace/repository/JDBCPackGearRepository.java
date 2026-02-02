@@ -1,6 +1,6 @@
 package com.packtrace.repository;
 
-import com.packtrace.dto.PackGearResponse;
+import com.packtrace.model.PackGear;
 import io.agroal.api.AgroalDataSource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -62,26 +62,23 @@ public class JDBCPackGearRepository implements PackGearRepository {
     }
 
     @Override
-    public List<PackGearResponse> findGearInPack(Long packId) {
+    public List<PackGear> findGearInPack(Long packId) {
         String sql = """
-                SELECT g.id, g.name, g.brand, g.weight_grams, pg.quantity
-                FROM pack_gear pg
-                JOIN gear g ON pg.gear_id = g.id
-                WHERE pg.pack_id = ?;
+                SELECT pack_id, gear_id, quantity
+                FROM pack_gear
+                WHERE pack_id = ?;
                 """;
 
-        List<PackGearResponse> gearList = new ArrayList<>();
+        List<PackGear> gearList = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setLong(1, packId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    gearList.add(new PackGearResponse(
-                            resultSet.getLong("id"),
-                            resultSet.getString("name"),
-                            resultSet.getString("brand"),
-                            resultSet.getObject("weight_grams", Integer.class),
+                    gearList.add(new PackGear(
+                            resultSet.getLong("pack_id"),
+                            resultSet.getLong("gear_id"),
                             resultSet.getInt("quantity")
                     ));
                 }

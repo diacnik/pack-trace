@@ -1,8 +1,11 @@
 package com.packtrace.service;
 
 import com.packtrace.dto.PackGearResponse;
+import com.packtrace.mapper.PackMapper;
 import com.packtrace.model.Account;
+import com.packtrace.model.Gear;
 import com.packtrace.model.Pack;
+import com.packtrace.model.PackGear;
 import com.packtrace.repository.PackRepository;
 import com.packtrace.repository.PackGearRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -134,7 +137,15 @@ public class PackService {
     }
 
     public List<PackGearResponse> getPackGear(Long packId) {
-        return packGearRepository.findGearInPack(packId);
+        List<PackGear> packGears = packGearRepository.findGearInPack(packId);
+        return packGears.stream()
+                .map(packGear -> {
+                    Gear gear = gearService.getGearById(packGear.getGearId())
+                            .orElse(null);
+                    return PackMapper.toGearResponse(packGear, gear);
+                })
+                .filter(response -> response != null)
+                .toList();
     }
 
     @Transactional

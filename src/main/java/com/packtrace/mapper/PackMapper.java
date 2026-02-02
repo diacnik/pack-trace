@@ -1,8 +1,11 @@
 package com.packtrace.mapper;
 
+import com.packtrace.dto.PackGearResponse;
 import com.packtrace.dto.PackRequest;
 import com.packtrace.dto.PackResponse;
+import com.packtrace.model.Gear;
 import com.packtrace.model.Pack;
+import com.packtrace.model.PackGear;
 import jakarta.enterprise.context.ApplicationScoped;
 
 @ApplicationScoped
@@ -25,5 +28,17 @@ public class PackMapper {
         pack.setName(request.name());
         pack.setDescription(request.description());
         return pack;
+    }
+
+    public static PackGearResponse toGearResponse(PackGear packGear, Gear gear) {
+        if (packGear == null || gear == null)
+            return null;
+        return new PackGearResponse(
+                gear.getId(),
+                gear.getName(),
+                gear.getBrand(),
+                gear.getWeightGrams(),
+                packGear.getQuantity()
+        );
     }
 }

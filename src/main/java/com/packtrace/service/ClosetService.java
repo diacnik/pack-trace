@@ -1,8 +1,11 @@
 package com.packtrace.service;
 
 import com.packtrace.dto.ClosetGearResponse;
+import com.packtrace.mapper.ClosetMapper;
 import com.packtrace.model.Account;
 import com.packtrace.model.Closet;
+import com.packtrace.model.ClosetGear;
+import com.packtrace.model.Gear;
 import com.packtrace.repository.ClosetRepository;
 import com.packtrace.repository.ClosetGearRepository;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -134,7 +137,15 @@ public class ClosetService {
     }
 
     public List<ClosetGearResponse> getClosetGear(Long closetId) {
-        return closetGearRepository.findGearInCloset(closetId);
+        List<ClosetGear> closetGears = closetGearRepository.findGearInCloset(closetId);
+        return closetGears.stream()
+                .map(closetGear -> {
+                    Gear gear = gearService.getGearById(closetGear.getGearId())
+                            .orElse(null);
+                    return ClosetMapper.toGearResponse(closetGear, gear);
+                })
+                .filter(response -> response != null)
+                .toList();
     }
 
     @Transactional

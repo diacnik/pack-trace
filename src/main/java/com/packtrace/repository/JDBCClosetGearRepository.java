@@ -1,6 +1,6 @@
 package com.packtrace.repository;
 
-import com.packtrace.dto.ClosetGearResponse;
+import com.packtrace.model.ClosetGear;
 import io.agroal.api.AgroalDataSource;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -62,26 +62,23 @@ public class JDBCClosetGearRepository implements ClosetGearRepository {
     }
 
     @Override
-    public List<ClosetGearResponse> findGearInCloset(Long closetId) {
+    public List<ClosetGear> findGearInCloset(Long closetId) {
         String sql = """
-                SELECT g.id, g.name, g.brand, g.weight_grams, cg.quantity
-                FROM closet_gear cg
-                JOIN gear g ON cg.gear_id = g.id
-                WHERE cg.closet_id = ?;
+                SELECT closet_id, gear_id, quantity
+                FROM closet_gear
+                WHERE closet_id = ?;
                 """;
 
-        List<ClosetGearResponse> gearList = new ArrayList<>();
+        List<ClosetGear> gearList = new ArrayList<>();
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             preparedStatement.setLong(1, closetId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
-                    gearList.add(new ClosetGearResponse(
-                            resultSet.getLong("id"),
-                            resultSet.getString("name"),
-                            resultSet.getString("brand"),
-                            resultSet.getObject("weight_grams", Integer.class),
+                    gearList.add(new ClosetGear(
+                            resultSet.getLong("closet_id"),
+                            resultSet.getLong("gear_id"),
                             resultSet.getInt("quantity")
                     ));
                 }
