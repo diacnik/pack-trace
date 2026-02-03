@@ -18,6 +18,8 @@ dependencies {
     implementation 'io.quarkus:quarkus-oidc'
     implementation 'io.quarkus:quarkus-arc'
     implementation 'io.quarkus:quarkus-hibernate-validator'
+    implementation 'io.quarkus:quarkus-smallrye-fault-tolerance'
+    implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:7.6.0'
     testImplementation 'io.quarkus:quarkus-junit5'
 }
 
