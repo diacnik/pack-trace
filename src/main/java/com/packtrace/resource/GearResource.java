@@ -7,6 +7,7 @@ import com.packtrace.model.Gear;
 import com.packtrace.mapper.GearMapper;
 import com.packtrace.service.AccountService;
 import com.packtrace.service.GearService;
+import com.packtrace.validation.PositiveId;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -43,7 +44,7 @@ public class GearResource {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getGearById(@PathParam("id") Long id) {
+    public Response getGearById(@PathParam("id") @PositiveId Long id) {
         String auth0Id = jwt.getSubject();
         Account account = accountService.findByAuth0Id(auth0Id)
                 .orElse(null);
@@ -87,7 +88,7 @@ public class GearResource {
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateGear(@PathParam("id") Long id, @Valid GearRequest request) {
+    public Response updateGear(@PathParam("id") @PositiveId Long id, @Valid GearRequest request) {
         String auth0Id = jwt.getSubject();
         try {
             Gear gear = GearMapper.toEntity(request);
@@ -106,7 +107,7 @@ public class GearResource {
 
     @DELETE
     @Path("/{id}")
-    public Response deleteGear(@PathParam("id") Long id) {
+    public Response deleteGear(@PathParam("id") @PositiveId Long id) {
         String auth0Id = jwt.getSubject();
         try {
             gearService.deleteGear(id, auth0Id);

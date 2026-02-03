@@ -7,6 +7,7 @@ import com.packtrace.dto.PackResponse;
 import com.packtrace.model.Pack;
 import com.packtrace.mapper.PackMapper;
 import com.packtrace.service.PackService;
+import com.packtrace.validation.PositiveId;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -40,10 +41,17 @@ public class PackResource {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPackById(@PathParam("id") Long id) {
-        return packService.getPackById(id)
-                .map(pack -> Response.ok(PackMapper.toResponse(pack)).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build());
+    public Response getPackById(@PathParam("id") @PositiveId Long id) {
+        String auth0Id = jwt.getSubject();
+        try {
+            return packService.getPackById(id, auth0Id)
+                    .map(pack -> Response.ok(PackMapper.toResponse(pack)).build())
+                    .orElse(Response.status(Response.Status.NOT_FOUND).build());
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
     }
 
     @POST
@@ -68,7 +76,7 @@ public class PackResource {
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updatePack(@PathParam("id") Long id, @Valid PackRequest request) {
+    public Response updatePack(@PathParam("id") @PositiveId Long id, @Valid PackRequest request) {
         String auth0Id = jwt.getSubject();
         try {
             Pack pack = PackMapper.toEntity(request);
@@ -87,7 +95,7 @@ public class PackResource {
 
     @DELETE
     @Path("/{id}")
-    public Response deletePack(@PathParam("id") Long id) {
+    public Response deletePack(@PathParam("id") @PositiveId Long id) {
         String auth0Id = jwt.getSubject();
         try {
             packService.deletePack(id, auth0Id);
@@ -102,7 +110,7 @@ public class PackResource {
     @GET
     @Path("/{id}/gear")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<PackGearResponse> getPackGear(@PathParam("id") Long packId) {
+    public List<PackGearResponse> getPackGear(@PathParam("id") @PositiveId Long packId) {
         return packService.getPackGear(packId);
     }
 
@@ -110,7 +118,7 @@ public class PackResource {
     @Path("/{id}/gear")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addGearToPack(@PathParam("id") Long packId, @Valid PackGearRequest request) {
+    public Response addGearToPack(@PathParam("id") @PositiveId Long packId, @Valid PackGearRequest request) {
         String auth0Id = jwt.getSubject();
         try {
             packService.addGearToPack(packId, request.gearId(), request.quantity(), auth0Id);
@@ -128,7 +136,7 @@ public class PackResource {
 
     @DELETE
     @Path("/{id}/gear/{gearId}")
-    public Response removeGearFromPack(@PathParam("id") Long packId, @PathParam("gearId") Long gearId) {
+    public Response removeGearFromPack(@PathParam("id") @PositiveId Long packId, @PathParam("gearId") @PositiveId Long gearId) {
         String auth0Id = jwt.getSubject();
         try {
             packService.removeGearFromPack(packId, gearId, auth0Id);
@@ -148,7 +156,7 @@ public class PackResource {
     @Path("/{id}/gear/{gearId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updatePackGearQuantity(@PathParam("id") Long packId, @PathParam("gearId") Long gearId, 
+    public Response updatePackGearQuantity(@PathParam("id") @PositiveId Long packId, @PathParam("gearId") @PositiveId Long gearId, 
                                            @Valid PackGearRequest request) {
         String auth0Id = jwt.getSubject();
         try {

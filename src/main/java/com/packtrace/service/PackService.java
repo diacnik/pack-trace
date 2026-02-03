@@ -65,8 +65,21 @@ public class PackService {
                 .orElse(List.of());
     }
 
-    public Optional<Pack> getPackById(Long id) {
-        return packRepository.findById(id);
+    public Optional<Pack> getPackById(Long id, String auth0Id) {
+        Optional<Pack> packOpt = packRepository.findById(id);
+        if (packOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        Pack pack = packOpt.get();
+        Account account = accountService.findByAuth0Id(auth0Id)
+                .orElse(null);
+        
+        if (account == null || !pack.getAccountId().equals(account.getId())) {
+            throw new SecurityException("You do not own this pack");
+        }
+        
+        return Optional.of(pack);
     }
 
     @Transactional

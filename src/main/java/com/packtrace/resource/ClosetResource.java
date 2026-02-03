@@ -7,6 +7,7 @@ import com.packtrace.dto.ClosetResponse;
 import com.packtrace.model.Closet;
 import com.packtrace.mapper.ClosetMapper;
 import com.packtrace.service.ClosetService;
+import com.packtrace.validation.PositiveId;
 import io.quarkus.security.Authenticated;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -40,10 +41,17 @@ public class ClosetResource {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getClosetById(@PathParam("id") Long id) {
-        return closetService.getClosetById(id)
-                .map(closet -> Response.ok(ClosetMapper.toResponse(closet)).build())
-                .orElse(Response.status(Response.Status.NOT_FOUND).build());
+    public Response getClosetById(@PathParam("id") @PositiveId Long id) {
+        String auth0Id = jwt.getSubject();
+        try {
+            return closetService.getClosetById(id, auth0Id)
+                    .map(closet -> Response.ok(ClosetMapper.toResponse(closet)).build())
+                    .orElse(Response.status(Response.Status.NOT_FOUND).build());
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
     }
 
     @POST
@@ -68,7 +76,7 @@ public class ClosetResource {
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateCloset(@PathParam("id") Long id, @Valid ClosetRequest request) {
+    public Response updateCloset(@PathParam("id") @PositiveId Long id, @Valid ClosetRequest request) {
         String auth0Id = jwt.getSubject();
         try {
             Closet closet = ClosetMapper.toEntity(request);
@@ -87,7 +95,7 @@ public class ClosetResource {
 
     @DELETE
     @Path("/{id}")
-    public Response deleteCloset(@PathParam("id") Long id) {
+    public Response deleteCloset(@PathParam("id") @PositiveId Long id) {
         String auth0Id = jwt.getSubject();
         try {
             closetService.deleteCloset(id, auth0Id);
@@ -102,7 +110,7 @@ public class ClosetResource {
     @GET
     @Path("/{id}/gear")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<ClosetGearResponse> getClosetGear(@PathParam("id") Long closetId) {
+    public List<ClosetGearResponse> getClosetGear(@PathParam("id") @PositiveId Long closetId) {
         return closetService.getClosetGear(closetId);
     }
 
@@ -110,7 +118,7 @@ public class ClosetResource {
     @Path("/{id}/gear")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addGearToCloset(@PathParam("id") Long closetId, @Valid ClosetGearRequest request) {
+    public Response addGearToCloset(@PathParam("id") @PositiveId Long closetId, @Valid ClosetGearRequest request) {
         String auth0Id = jwt.getSubject();
         try {
             closetService.addGearToCloset(closetId, request.gearId(), request.quantity(), auth0Id);
@@ -128,7 +136,7 @@ public class ClosetResource {
 
     @DELETE
     @Path("/{id}/gear/{gearId}")
-    public Response removeGearFromCloset(@PathParam("id") Long closetId, @PathParam("gearId") Long gearId) {
+    public Response removeGearFromCloset(@PathParam("id") @PositiveId Long closetId, @PathParam("gearId") @PositiveId Long gearId) {
         String auth0Id = jwt.getSubject();
         try {
             closetService.removeGearFromCloset(closetId, gearId, auth0Id);
@@ -148,7 +156,7 @@ public class ClosetResource {
     @Path("/{id}/gear/{gearId}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response updateClosetGearQuantity(@PathParam("id") Long closetId, @PathParam("gearId") Long gearId, 
+    public Response updateClosetGearQuantity(@PathParam("id") @PositiveId Long closetId, @PathParam("gearId") @PositiveId Long gearId, 
                                              @Valid ClosetGearRequest request) {
         String auth0Id = jwt.getSubject();
         try {

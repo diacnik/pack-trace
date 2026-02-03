@@ -65,8 +65,21 @@ public class ClosetService {
                 .orElse(List.of());
     }
 
-    public Optional<Closet> getClosetById(Long id) {
-        return closetRepository.findById(id);
+    public Optional<Closet> getClosetById(Long id, String auth0Id) {
+        Optional<Closet> closetOpt = closetRepository.findById(id);
+        if (closetOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        
+        Closet closet = closetOpt.get();
+        Account account = accountService.findByAuth0Id(auth0Id)
+                .orElse(null);
+        
+        if (account == null || !closet.getAccountId().equals(account.getId())) {
+            throw new SecurityException("You do not own this closet");
+        }
+        
+        return Optional.of(closet);
     }
 
     @Transactional
