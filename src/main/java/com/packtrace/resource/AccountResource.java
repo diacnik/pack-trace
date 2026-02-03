@@ -1,6 +1,5 @@
 package com.packtrace.resource;
 
-import com.packtrace.dto.AccountResponse;
 import com.packtrace.mapper.AccountMapper;
 import com.packtrace.model.Account;
 import com.packtrace.service.AccountService;
@@ -56,3 +55,4 @@ public class AccountResource {
     }
 
     public record ErrorResponse(String message) {}
+}
