@@ -1,3 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
+  --ink: #1b1b1b;
+  --ink-muted: #5b5b5b;
+  --paper: #f8f5f0;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -5,9 +15,12 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: radial-gradient(circle at top left, #fff3d4, transparent 55%),
+    radial-gradient(circle at 20% 40%, #d2ecff, transparent 50%),
+    linear-gradient(180deg, #fef7e9 0%, #f2f5ff 100%);
+  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
