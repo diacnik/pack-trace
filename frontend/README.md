@@ -9,7 +9,7 @@ Svelte + Vite frontend for PackTrace gear tracking application.
 npm install
 ```
 
-2. Create a `.env` file with your Auth0 configuration:
+2. Create a `.env` file with your Auth0 configuration (copy from `.env.example`):
 ```
 VITE_AUTH0_DOMAIN=your-tenant.auth0.com
 VITE_AUTH0_CLIENT_ID=your-client-id

@@ -4,6 +4,45 @@ This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
 If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
 
+## Local setup
+
+### Prerequisites
+
+- Java (for Gradle/Quarkus)
+- Node.js and npm (for the frontend)
+- PostgreSQL (local or remote)
+
+### Environment variables (backend)
+
+The backend reads its configuration from environment variables. An example file is provided at `.env.example`.
+
+Export the variables in your shell before running the backend:
+
+```shell script
+export DB_USER=your_db_user
+export DB_PASSWORD=your_db_password
+export DB_URL=jdbc:postgresql://localhost:5432/pack_trace
+export AUTH0_DOMAIN=https://your-tenant.auth0.com
+export AUTH0_AUDIENCE=your-api-audience
+```
+
+### Run locally
+
+1. Start the backend (Quarkus):
+
+```shell script
+./gradlew quarkusDev
+```
+
+2. Start the frontend (from `frontend/`):
+
+```shell script
+npm install
+npm run dev
+```
+
+The frontend expects the backend at `http://localhost:8080` and proxies `/api/*` requests there.
+
 ## Running the application in dev mode
 
 You can run your application in dev mode that enables live coding using:
