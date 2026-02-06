@@ -5,13 +5,14 @@
   import Landing from './routes/Landing.svelte';
   import Dashboard from './routes/Dashboard.svelte';
   import Closet from './routes/Closet.svelte';
+  import Packs from './routes/Packs.svelte';
   import ToastHost from './components/ToastHost.svelte';
 
   onMount(async () => {
     await authClient.initialize();
   });
 
-  $: if ($isAuthenticated && $currentPath !== '/' && $currentPath !== '/closet') {
+  $: if ($isAuthenticated && $currentPath !== '/' && $currentPath !== '/closet' && $currentPath !== '/packs') {
     navigate('/');
   }
 </script>
@@ -23,6 +24,8 @@
 {:else if $isAuthenticated}
   {#if $currentPath === '/closet'}
     <Closet user={$user} />
+  {:else if $currentPath === '/packs'}
+    <Packs user={$user} />
   {:else}
     <Dashboard user={$user} />
   {/if}

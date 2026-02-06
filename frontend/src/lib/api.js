@@ -110,3 +110,55 @@ export async function addGearToCloset(closetId, payload) {
     body: JSON.stringify(payload)
   });
 }
+
+export async function fetchPacks() {
+  return apiRequest('/pack');
+}
+
+export async function fetchPack(id) {
+  return apiRequest(`/pack/${id}`);
+}
+
+export async function createPack(payload) {
+  return apiRequest('/pack', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updatePack(id, payload) {
+  return apiRequest(`/pack/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deletePack(id) {
+  return apiRequest(`/pack/${id}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function fetchPackGear(packId) {
+  return apiRequest(`/pack/${packId}/gear`);
+}
+
+export async function addGearToPack(packId, payload) {
+  return apiRequest(`/pack/${packId}/gear`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updatePackGearQuantity(packId, gearId, payload) {
+  return apiRequest(`/pack/${packId}/gear/${gearId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function removeGearFromPack(packId, gearId) {
+  return apiRequest(`/pack/${packId}/gear/${gearId}`, {
+    method: 'DELETE'
+  });
+}

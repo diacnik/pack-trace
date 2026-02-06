@@ -25,7 +25,7 @@ public class JDBCPackGearRepository implements PackGearRepository {
                 INSERT INTO pack_gear (pack_id, gear_id, quantity)
                 VALUES (?, ?, ?)
                 ON CONFLICT (pack_id, gear_id)
-                DO UPDATE SET quantity = quantity + ?;
+            DO UPDATE SET quantity = pack_gear.quantity + EXCLUDED.quantity;
                 """;
 
         try (Connection connection = dataSource.getConnection();
@@ -34,8 +34,6 @@ public class JDBCPackGearRepository implements PackGearRepository {
             preparedStatement.setLong(1, packId);
             preparedStatement.setLong(2, gearId);
             preparedStatement.setInt(3, quantity);
-            preparedStatement.setInt(4, quantity);
-
             preparedStatement.executeUpdate();
         } catch (SQLException sqlException) {
             throw new RuntimeException("Error adding gear to pack", sqlException);

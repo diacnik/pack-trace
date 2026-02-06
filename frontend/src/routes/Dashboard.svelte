@@ -177,7 +177,7 @@
 
   <nav class="nav-strip">
     <button class="active" type="button">Gear</button>
-    <button type="button">Packs</button>
+    <button type="button" on:click={() => navigate('/packs')}>Packs</button>
     <button type="button" on:click={() => navigate('/closet')}>Closets</button>
   </nav>
 
