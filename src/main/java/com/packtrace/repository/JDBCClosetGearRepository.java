@@ -22,11 +22,11 @@ public class JDBCClosetGearRepository implements ClosetGearRepository {
     @Override
     public void addGearToCloset(Long closetId, Long gearId, int quantity) {
         String sql = """
-                INSERT INTO closet_gear (closet_id, gear_id, quantity)
-                VALUES (?, ?, ?)
-                ON CONFLICT (closet_id, gear_id)
-                DO UPDATE SET quantity = quantity + ?;
-                """;
+            INSERT INTO closet_gear (closet_id, gear_id, quantity)
+            VALUES (?, ?, ?)
+            ON CONFLICT (closet_id, gear_id)
+            DO UPDATE SET quantity = closet_gear.quantity + EXCLUDED.quantity;
+            """;
 
         try (Connection connection = dataSource.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
@@ -34,8 +34,6 @@ public class JDBCClosetGearRepository implements ClosetGearRepository {
             preparedStatement.setLong(1, closetId);
             preparedStatement.setLong(2, gearId);
             preparedStatement.setInt(3, quantity);
-            preparedStatement.setInt(4, quantity);
-
             preparedStatement.executeUpdate();
         } catch (SQLException sqlException) {
             throw new RuntimeException("Error adding gear to closet", sqlException);

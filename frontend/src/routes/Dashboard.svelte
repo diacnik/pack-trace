@@ -3,6 +3,7 @@
   import { authClient } from '../lib/auth0';
   import { fetchClosets, fetchGear, createGear, addGearToCloset } from '../lib/api';
   import { pushToast } from '../lib/toast';
+  import { navigate } from '../lib/router';
 
   export let user;
 
@@ -175,9 +176,9 @@
   </header>
 
   <nav class="nav-strip">
-    <button class="active">Gear</button>
-    <button>Packs</button>
-    <button>Closets</button>
+    <button class="active" type="button">Gear</button>
+    <button type="button">Packs</button>
+    <button type="button" on:click={() => navigate('/closet')}>Closets</button>
   </nav>
 
   <section class="grid">

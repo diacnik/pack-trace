@@ -52,6 +52,47 @@ export async function fetchClosets() {
   return apiRequest('/closet');
 }
 
+export async function fetchCloset(id) {
+  return apiRequest(`/closet/${id}`);
+}
+
+export async function createCloset(payload) {
+  return apiRequest('/closet', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function updateCloset(id, payload) {
+  return apiRequest(`/closet/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteCloset(id) {
+  return apiRequest(`/closet/${id}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function fetchClosetGear(closetId) {
+  return apiRequest(`/closet/${closetId}/gear`);
+}
+
+export async function updateClosetGearQuantity(closetId, gearId, payload) {
+  return apiRequest(`/closet/${closetId}/gear/${gearId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function removeGearFromCloset(closetId, gearId) {
+  return apiRequest(`/closet/${closetId}/gear/${gearId}`, {
+    method: 'DELETE'
+  });
+}
+
 export async function fetchGear() {
   return apiRequest('/gear');
 }
