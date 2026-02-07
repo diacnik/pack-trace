@@ -1,8 +1,13 @@
 # pack-trace
 
-This project uses Quarkus, the Supersonic Subatomic Java Framework.
+PackTrace is a gear tracking app for outdoor packs, letting users catalog items, organize by pack, and manage their loadout.
 
-If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
+## Tech stack
+
+- Backend: Quarkus (Java), REST, JDBC
+- Database: PostgreSQL
+- Auth: Auth0 (OIDC/JWT)
+- Frontend: Svelte + Vite
 
 ## Local setup
 
@@ -11,6 +16,7 @@ If you want to learn more about Quarkus, please visit its website: <https://quar
 - Java (for Gradle/Quarkus)
 - Node.js and npm (for the frontend)
 - PostgreSQL (local or remote)
+- Docker (optional, for local Postgres via Compose)
 
 ### Environment variables (backend)
 
@@ -24,6 +30,28 @@ export DB_PASSWORD=your_db_password
 export DB_URL=jdbc:postgresql://localhost:5432/pack_trace
 export AUTH0_DOMAIN=https://your-tenant.auth0.com
 export AUTH0_AUDIENCE=your-api-audience
+```
+
+### Database via Docker Compose (optional)
+
+If you prefer not to install Postgres locally, you can run it with Docker Compose:
+
+```shell script
+docker compose up -d
+```
+
+To stop and remove the container and wipe the data volume:
+
+```shell script
+docker compose down -v
+```
+
+This uses the defaults defined in `docker-compose.yml`. Set your env vars to match:
+
+```shell script
+export DB_USER=packtrace
+export DB_PASSWORD=packtrace
+export DB_URL=jdbc:postgresql://localhost:5432/pack_trace
 ```
 
 ### Run locally
@@ -43,59 +71,8 @@ npm run dev
 
 The frontend expects the backend at `http://localhost:8080` and proxies `/api/*` requests there.
 
-## Running the application in dev mode
+## Quarkus
 
-You can run your application in dev mode that enables live coding using:
+This project uses Quarkus, the Supersonic Subatomic Java Framework.
 
-```shell script
-./gradlew quarkusDev
-```
-
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at <http://localhost:8080/q/dev/>.
-
-## Packaging and running the application
-
-The application can be packaged using:
-
-```shell script
-./gradlew build
-```
-
-It produces the `quarkus-run.jar` file in the `build/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `build/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar build/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-
-```shell script
-./gradlew build -Dquarkus.package.jar.type=uber-jar
-```
-
-The application, packaged as an _über-jar_, is now runnable using `java -jar build/*-runner.jar`.
-
-## Creating a native executable
-
-You can create a native executable using:
-
-```shell script
-./gradlew build -Dquarkus.native.enabled=true
-```
-
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using:
-
-```shell script
-./gradlew build -Dquarkus.native.enabled=true -Dquarkus.native.container-build=true
-```
-
-You can then execute your native executable with: `./build/pack-trace-1.0.0-SNAPSHOT-runner`
-
-If you want to learn more about building native executables, please consult <https://quarkus.io/guides/gradle-tooling>.
-
-## Related Guides
-
-- REST ([guide](https://quarkus.io/guides/rest)): A Jakarta REST implementation utilizing build time processing and Vert.x. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it.
-- REST Jackson ([guide](https://quarkus.io/guides/rest#json-serialisation)): Jackson serialization support for Quarkus REST. This extension is not compatible with the quarkus-resteasy extension, or any of the extensions that depend on it
-- Agroal - DB connection pool ([guide](https://quarkus.io/guides/datasource)): JDBC Datasources and connection pooling
-- JDBC Driver - PostgreSQL ([guide](https://quarkus.io/guides/datasource)): Connect to the PostgreSQL database via JDBC
-- OpenID Connect ([guide](https://quarkus.io/guides/security-openid-connect)): Verify Bearer access tokens and authenticate users with Authorization Code Flow
+If you want to learn more about Quarkus, please visit its website: <https://quarkus.io/>.
