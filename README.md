@@ -1,4 +1,4 @@
-# pack-trace
+# PackTrace
 
 PackTrace is a gear tracking app for outdoor packs, letting users catalog items, organize by pack, and manage their loadout.
 
