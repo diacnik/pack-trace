@@ -107,6 +107,7 @@ public class JDBCGearRepository implements GearRepository{
             preparedStatement.setObject(1, gear.getOwnerId());
             preparedStatement.setString(2, gear.getName());
             preparedStatement.setString(3, gear.getBrand());
+            // Handle nullable weight_grams
             if (gear.getWeightGrams() != null) {
                 preparedStatement.setInt(4, gear.getWeightGrams());
             } else {
@@ -120,7 +121,7 @@ public class JDBCGearRepository implements GearRepository{
                     gear.setId(resultSet.getLong(1));
             }
         } catch (SQLException sqlException) {
-            throw new RuntimeException("Error deleting gear", sqlException);
+            throw new RuntimeException("Error creating gear", sqlException);
         }
     }
 
@@ -137,6 +138,7 @@ public class JDBCGearRepository implements GearRepository{
 
             preparedStatement.setString(1, gear.getName());
             preparedStatement.setString(2, gear.getBrand());
+            // Handle nullable weight_grams
             if (gear.getWeightGrams() != null) {
                 preparedStatement.setInt(3, gear.getWeightGrams());
             } else {

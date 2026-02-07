@@ -24,6 +24,7 @@ public class AccountService {
         if (existingAccount.isPresent())
             return existingAccount.get();
 
+        // Ensure the username is unique by appending a number if necessary
         String finalUsername = username;
         List<String> conflicts = accountRepository.findAllUsernamesStartingWith(username);
         Set<String> takenUsernames = new HashSet<>(conflicts);

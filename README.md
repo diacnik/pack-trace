@@ -18,6 +18,15 @@ PackTrace is a gear tracking app for outdoor packs, letting users catalog items,
 - PostgreSQL (local or remote)
 - Docker (optional, for local Postgres via Compose)
 
+### Auth0 setup (required)
+
+Each developer needs access to an Auth0 tenant with:
+
+- A Single Page Application (SPA) for the frontend
+- An API for the backend audience
+
+Use the tenant values to fill in the Auth0 environment variables for both the frontend and backend.
+
 ### Environment variables (backend)
 
 The backend reads its configuration from environment variables. An example file is provided at `.env.example`.

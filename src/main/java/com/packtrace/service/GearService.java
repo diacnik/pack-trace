@@ -22,7 +22,7 @@ public class GearService {
     @Transactional
     public Gear createGear(String auth0Id, Gear gear) {
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found. Please login via /api/me first."));
+                .orElseThrow(() -> new IllegalArgumentException("Account not found. Please login first."));
         gear.setOwnerId(account.getId());
         gearRepository.persist(gear);
         return gear;
@@ -34,7 +34,7 @@ public class GearService {
         if (existingOpt.isPresent()) {
             Gear existing = existingOpt.get();
             Account account = accountService.findByAuth0Id(auth0Id)
-                    .orElseThrow(() -> new SecurityException("Account not found"));
+                    .orElseThrow(() -> new SecurityException("Account not found. Please login first."));
 
             if (!existing.getOwnerId().equals(account.getId())) {
                 throw new SecurityException("You do not own this gear");
@@ -62,15 +62,15 @@ public class GearService {
 
         Gear existing = existingOpt.get();
 
-        // Verify ownership
+        // Ensure the user owns the gear before allowing updates
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new SecurityException("Account not found"));
+                .orElseThrow(() -> new SecurityException("Account not found. Please login first."));
 
         if (!existing.getOwnerId().equals(account.getId())) {
             throw new SecurityException("You do not own this gear");
         }
 
-        // Update fields
+        // Only update fields that are allowed to be changed
         existing.setName(updatedGear.getName());
         existing.setBrand(updatedGear.getBrand());
         existing.setWeightGrams(updatedGear.getWeightGrams());

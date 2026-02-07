@@ -45,6 +45,7 @@ public class GearResource {
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getGearById(@PathParam("id") @PositiveId Long id) {
+        // Ensure the user owns the gear before returning it
         String auth0Id = jwt.getSubject();
         Account account = accountService.findByAuth0Id(auth0Id)
                 .orElse(null);

@@ -33,7 +33,7 @@ public class PackService {
     @Transactional
     public Pack createPack(String auth0Id, Pack pack) {
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found. Please login via /api/account first."));
+                .orElseThrow(() -> new IllegalArgumentException("Account not found. Please login first."));
         
         if (packRepository.existsByAccountIdAndName(account.getId(), pack.getName())) {
             throw new IllegalArgumentException("Pack with this name already exists");
@@ -50,7 +50,7 @@ public class PackService {
         if (existingOpt.isPresent()) {
             Pack existing = existingOpt.get();
             Account account = accountService.findByAuth0Id(auth0Id)
-                    .orElseThrow(() -> new SecurityException("Account not found"));
+                    .orElseThrow(() -> new SecurityException("Account not found."));
 
             if (!existing.getAccountId().equals(account.getId())) {
                 throw new SecurityException("You do not own this pack");
@@ -91,9 +91,8 @@ public class PackService {
 
         Pack existing = existingOpt.get();
 
-        // Verify ownership
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new SecurityException("Account not found"));
+                .orElseThrow(() -> new SecurityException("Account not found."));
 
         if (!existing.getAccountId().equals(account.getId())) {
             throw new SecurityException("You do not own this pack");
@@ -105,7 +104,6 @@ public class PackService {
             throw new IllegalArgumentException("Pack with this name already exists");
         }
 
-        // Update fields
         existing.setName(updatedPack.getName());
         existing.setDescription(updatedPack.getDescription());
 
@@ -115,18 +113,16 @@ public class PackService {
 
     @Transactional
     public void addGearToPack(Long packId, Long gearId, int quantity, String auth0Id) {
-        // Verify pack ownership
         Pack pack = packRepository.findById(packId)
                 .orElseThrow(() -> new IllegalArgumentException("Pack not found"));
         
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new SecurityException("Account not found"));
+                .orElseThrow(() -> new SecurityException("Account not found."));
         
         if (!pack.getAccountId().equals(account.getId())) {
             throw new SecurityException("You do not own this pack");
         }
 
-        // Verify gear exists and is owned by user
         Gear gear = gearService.getGearById(gearId)
                 .orElseThrow(() -> new IllegalArgumentException("Gear not found"));
         
@@ -139,7 +135,6 @@ public class PackService {
 
     @Transactional
     public void removeGearFromPack(Long packId, Long gearId, String auth0Id) {
-        // Verify pack ownership
         Pack pack = packRepository.findById(packId)
                 .orElseThrow(() -> new IllegalArgumentException("Pack not found"));
         
@@ -167,7 +162,6 @@ public class PackService {
 
     @Transactional
     public void updatePackGearQuantity(Long packId, Long gearId, int quantity, String auth0Id) {
-        // Verify pack ownership
         Pack pack = packRepository.findById(packId)
                 .orElseThrow(() -> new IllegalArgumentException("Pack not found"));
         
@@ -178,10 +172,10 @@ public class PackService {
             throw new SecurityException("You do not own this pack");
         }
 
-        // Verify gear is in pack
         packGearRepository.getQuantity(packId, gearId)
                 .orElseThrow(() -> new IllegalArgumentException("Gear is not in this pack"));
 
+        // If quantity is zero or negative, remove the gear from the pack
         if (quantity <= 0) {
             packGearRepository.removeGearFromPack(packId, gearId);
         } else {

@@ -33,7 +33,7 @@ public class ClosetService {
     @Transactional
     public Closet createCloset(String auth0Id, Closet closet) {
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found. Please login via /api/account first."));
+                .orElseThrow(() -> new IllegalArgumentException("Account not found. Please login first."));
         
         if (closetRepository.existsByAccountIdAndName(account.getId(), closet.getName())) {
             throw new IllegalArgumentException("Closet with this name already exists");
@@ -50,7 +50,7 @@ public class ClosetService {
         if (existingOpt.isPresent()) {
             Closet existing = existingOpt.get();
             Account account = accountService.findByAuth0Id(auth0Id)
-                    .orElseThrow(() -> new SecurityException("Account not found"));
+                    .orElseThrow(() -> new SecurityException("Account not found. Please login first."));
 
             if (!existing.getAccountId().equals(account.getId())) {
                 throw new SecurityException("You do not own this closet");
@@ -93,7 +93,7 @@ public class ClosetService {
 
         // Verify ownership
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new SecurityException("Account not found"));
+                .orElseThrow(() -> new SecurityException("Account not found. Please login first."));
 
         if (!existing.getAccountId().equals(account.getId())) {
             throw new SecurityException("You do not own this closet");
@@ -120,7 +120,7 @@ public class ClosetService {
                 .orElseThrow(() -> new IllegalArgumentException("Closet not found"));
         
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new SecurityException("Account not found"));
+                .orElseThrow(() -> new SecurityException("Account not found. Please login first."));
         
         if (!closet.getAccountId().equals(account.getId())) {
             throw new SecurityException("You do not own this closet");
@@ -144,7 +144,7 @@ public class ClosetService {
                 .orElseThrow(() -> new IllegalArgumentException("Closet not found"));
         
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new SecurityException("Account not found"));
+                .orElseThrow(() -> new SecurityException("Account not found. Please login first."));
         
         if (!closet.getAccountId().equals(account.getId())) {
             throw new SecurityException("You do not own this closet");
@@ -172,7 +172,7 @@ public class ClosetService {
                 .orElseThrow(() -> new IllegalArgumentException("Closet not found"));
         
         Account account = accountService.findByAuth0Id(auth0Id)
-                .orElseThrow(() -> new SecurityException("Account not found"));
+                .orElseThrow(() -> new SecurityException("Account not found. Please login first."));
         
         if (!closet.getAccountId().equals(account.getId())) {
             throw new SecurityException("You do not own this closet");
