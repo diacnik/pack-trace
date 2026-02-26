@@ -104,6 +104,19 @@ export async function createGear(payload) {
   });
 }
 
+export async function updateGear(id, payload) {
+  return apiRequest(`/gear/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteGear(id) {
+  return apiRequest(`/gear/${id}`, {
+    method: 'DELETE'
+  });
+}
+
 export async function addGearToCloset(closetId, payload) {
   return apiRequest(`/closet/${closetId}/gear`, {
     method: 'POST',

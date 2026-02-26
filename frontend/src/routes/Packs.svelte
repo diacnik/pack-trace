@@ -4,13 +4,15 @@
   import {
     fetchPacks,
     createPack,
+    updatePack,
     deletePack,
     fetchPackGear,
     addGearToPack,
     updatePackGearQuantity,
     removeGearFromPack,
     fetchClosets,
-    fetchClosetGear
+    fetchClosetGear,
+    fetchGear
   } from '../lib/api';
   import { pushToast } from '../lib/toast';
   import { navigate } from '../lib/router';
@@ -26,6 +28,7 @@
   let packGearLoading = false;
   let packGearError = '';
   let packGearRequestId = 0;
+  let gearLibrary = [];
 
   let closets = [];
   let closetsLoading = true;
@@ -38,12 +41,20 @@
   let selectedClosetGearId = '';
 
   let createLoading = false;
+  let packUpdateLoading = false;
   let deleteLoading = false;
   let addLoading = false;
   let updateLoadingId = null;
   let removeLoadingId = null;
+  let showAddPackForm = false;
+  let showEditPackMenu = false;
 
-  let packForm = {
+  let addPackForm = {
+    name: '',
+    description: ''
+  };
+
+  let editPackForm = {
     name: '',
     description: ''
   };
@@ -52,7 +63,7 @@
   let packQuantities = {};
 
   onMount(async () => {
-    await Promise.all([loadPacks(), loadClosets()]);
+    await Promise.all([loadPacks(), loadClosets(), loadGearLibrary()]);
   });
 
   $: selectedPack = packs.find((pack) => String(pack.id) === selectedPackId);
@@ -61,6 +72,11 @@
     (sum, item) => sum + (item.weightGrams || 0) * (item.quantity || 0),
     0
   );
+  $: gearCategoryById = gearLibrary.reduce((acc, gear) => {
+    acc[String(gear.id)] = gear.category?.trim() || 'Uncategorized';
+    return acc;
+  }, {});
+  $: packGearByCategory = groupPackGearByCategory(packGear, gearCategoryById);
 
   async function loadPacks() {
     packsLoading = true;
@@ -73,6 +89,7 @@
         await handleSelectPack(String(packs[0].id));
       } else if (packs.length === 0) {
         selectedPackId = '';
+        showEditPackMenu = false;
         packGear = [];
         packQuantities = {};
       }
@@ -142,6 +159,15 @@
     }
   }
 
+  async function loadGearLibrary() {
+    try {
+      const data = await fetchGear();
+      gearLibrary = Array.isArray(data) ? data : [];
+    } catch {
+      gearLibrary = [];
+    }
+  }
+
   async function loadClosetGear(closetId) {
     if (!closetId) {
       closetGear = [];
@@ -179,6 +205,12 @@
 
   async function handleSelectPack(packId) {
     selectedPackId = packId;
+    showEditPackMenu = false;
+    const pack = packs.find((item) => String(item.id) === packId);
+    editPackForm = {
+      name: pack?.name || '',
+      description: pack?.description || ''
+    };
     await loadPackGear(packId);
   }
 
@@ -192,8 +224,8 @@
     createLoading = true;
 
     const payload = {
-      name: packForm.name?.trim(),
-      description: packForm.description?.trim() || null
+      name: addPackForm.name?.trim(),
+      description: addPackForm.description?.trim() || null
     };
 
     if (!payload.name) {
@@ -205,13 +237,43 @@
     try {
       const created = await createPack(payload);
       packs = [created, ...packs];
-      packForm = { name: '', description: '' };
+      addPackForm = { name: '', description: '' };
+      showAddPackForm = false;
       await handleSelectPack(String(created.id));
       pushToast('Pack created.', 'success');
     } catch (error) {
       pushToast(error.message || 'Unable to create pack.', 'error');
     } finally {
       createLoading = false;
+    }
+  }
+
+  async function handleUpdatePack() {
+    if (!selectedPackId) {
+      pushToast('Select a pack first.', 'error');
+      return;
+    }
+
+    const payload = {
+      name: editPackForm.name?.trim(),
+      description: editPackForm.description?.trim() || null
+    };
+
+    if (!payload.name) {
+      pushToast('Pack name is required.', 'error');
+      return;
+    }
+
+    packUpdateLoading = true;
+    try {
+      const updated = await updatePack(selectedPackId, payload);
+      packs = packs.map((pack) => (String(pack.id) === selectedPackId ? updated : pack));
+      showEditPackMenu = false;
+      pushToast('Pack updated.', 'success');
+    } catch (error) {
+      pushToast(error.message || 'Unable to update pack.', 'error');
+    } finally {
+      packUpdateLoading = false;
     }
   }
 
@@ -230,6 +292,7 @@
       await deletePack(selectedPackId);
       packs = packs.filter((pack) => String(pack.id) !== selectedPackId);
       selectedPackId = '';
+      showEditPackMenu = false;
       packGear = [];
       packQuantities = {};
       if (packs.length > 0) {
@@ -324,6 +387,20 @@
 
     return `${grams} g (${(grams / 1000).toFixed(2)} kg)`;
   }
+
+  function groupPackGearByCategory(items, categoryMap) {
+    const grouped = new Map();
+
+    for (const item of items) {
+      const category = categoryMap[String(item.gearId)] || 'Uncategorized';
+      if (!grouped.has(category)) {
+        grouped.set(category, []);
+      }
+      grouped.get(category).push(item);
+    }
+
+    return Array.from(grouped.entries()).sort(([left], [right]) => left.localeCompare(right));
+  }
 </script>
 
 <main>
@@ -341,7 +418,7 @@
   </header>
 
   <nav class="nav-strip">
-    <button type="button" on:click={() => navigate('/')}>Gear</button>
+    <button type="button" on:click={() => navigate('/')}>Dashboard</button>
     <button class="active" type="button">Packs</button>
     <button type="button" on:click={() => navigate('/closet')}>Closets</button>
   </nav>
@@ -349,29 +426,10 @@
   <section class="pack-layout">
     <article class="card accent">
       <div class="card-header">
-        <h2>Create a pack</h2>
-        <p>Name the trip and outline the gear you want to carry.</p>
+        <h2>Packs</h2>
       </div>
 
-      <form class="form" on:submit|preventDefault={handleCreatePack}>
-        <label>
-          Pack name
-          <input type="text" bind:value={packForm.name} placeholder="Fall weekend loop" required />
-        </label>
-        <label>
-          Description
-          <textarea
-            rows="3"
-            bind:value={packForm.description}
-            placeholder="Two nights in the Enchantments, shoulder season"
-          ></textarea>
-        </label>
-        <button class="primary" type="submit" disabled={createLoading}>
-          {createLoading ? 'Saving...' : 'Create pack'}
-        </button>
-      </form>
-
-      <div class="section-title">Your packs</div>
+      <div class="section-title">Pack list</div>
 
       {#if packsLoading}
         <p class="muted">Loading packs...</p>
@@ -395,12 +453,40 @@
           {/each}
         </ul>
       {/if}
+
+      <div class="actions top-gap">
+        <button class="primary" type="button" on:click={() => (showAddPackForm = !showAddPackForm)}>
+          {showAddPackForm ? 'Cancel add pack' : 'Add pack'}
+        </button>
+      </div>
+
+      {#if showAddPackForm}
+        <div class="subpanel">
+          <h3>Add pack</h3>
+          <form class="form two-col" on:submit|preventDefault={handleCreatePack}>
+            <label>
+              Pack name
+              <input type="text" bind:value={addPackForm.name} placeholder="Fall weekend loop" required />
+            </label>
+            <label class="full">
+              Description
+              <textarea
+                rows="3"
+                bind:value={addPackForm.description}
+                placeholder="Two nights in the Enchantments, shoulder season"
+              ></textarea>
+            </label>
+            <button class="primary full" type="submit" disabled={createLoading}>
+              {createLoading ? 'Saving...' : 'Create pack'}
+            </button>
+          </form>
+        </div>
+      {/if}
     </article>
 
     <article class="card spotlight">
       <div class="card-header">
         <h2>Pack details</h2>
-        <p>Dial in your kit with weight and quantity controls.</p>
       </div>
 
       {#if !selectedPackId}
@@ -415,10 +501,46 @@
             <span>{packItemCount} items</span>
             <span>{formatWeight(packWeight)}</span>
           </div>
-          <button class="danger" type="button" on:click={handleDeletePack} disabled={deleteLoading}>
-            {deleteLoading ? 'Deleting...' : 'Delete pack'}
+        </div>
+
+        <div class="actions">
+          <button
+            class="ghost"
+            type="button"
+            on:click={() => (showEditPackMenu = !showEditPackMenu)}
+            disabled={!selectedPackId || packUpdateLoading}
+          >
+            {showEditPackMenu ? 'Close update menu' : 'Update'}
+          </button>
+          <button class="ghost danger" type="button" on:click={handleDeletePack} disabled={deleteLoading}>
+            {deleteLoading ? 'Deleting...' : 'Delete'}
           </button>
         </div>
+
+        {#if showEditPackMenu}
+          <div class="subpanel">
+            <h3>Update pack</h3>
+            <div class="form two-col">
+              <label>
+                Pack name
+                <input type="text" bind:value={editPackForm.name} placeholder="Fall weekend loop" required />
+              </label>
+              <label class="full">
+                Description
+                <textarea
+                  rows="3"
+                  bind:value={editPackForm.description}
+                  placeholder="Two nights in the Enchantments, shoulder season"
+                ></textarea>
+              </label>
+            </div>
+            <div class="actions">
+              <button class="ghost" type="button" on:click={handleUpdatePack} disabled={packUpdateLoading}>
+                {packUpdateLoading ? 'Saving...' : 'Save update'}
+              </button>
+            </div>
+          </div>
+        {/if}
 
         {#if packGearLoading}
           <p class="muted">Loading gear...</p>
@@ -427,49 +549,58 @@
         {:else if packGear.length === 0}
           <p class="muted">No gear in this pack yet. Add items from a closet.</p>
         {:else}
-          <div class="gear-table">
-            <div class="gear-row header">
-              <span>Item</span>
-              <span>Qty</span>
-              <span>Weight</span>
-              <span>Total</span>
-              <span></span>
-            </div>
-            {#each packGear as item}
-              <div class="gear-row">
-                <div class="gear-main">
-                  <strong>{item.name}</strong>
-                  <span>{item.brand || 'Unbranded'}</span>
-                </div>
-                <div class="qty-control">
-                  <input
-                    type="number"
-                    min="1"
-                    value={packQuantities[item.gearId] ?? item.quantity}
-                    on:input={(event) => handleQuantityInput(item.gearId, event)}
-                  />
-                  <button
-                    class="ghost"
-                    type="button"
-                    on:click={() => handleUpdateQuantity(item.gearId)}
-                    disabled={updateLoadingId === item.gearId}
-                  >
-                    {updateLoadingId === item.gearId ? 'Saving...' : 'Update'}
-                  </button>
-                </div>
-                <span>{formatWeight(item.weightGrams)}</span>
-                <span>{formatWeight(item.weightGrams * item.quantity)}</span>
-                <button
-                  class="ghost danger"
-                  type="button"
-                  on:click={() => handleRemoveGear(item.gearId)}
-                  disabled={removeLoadingId === item.gearId}
-                >
-                  {removeLoadingId === item.gearId ? 'Removing...' : 'Remove'}
-                </button>
+          {#each packGearByCategory as [categoryName, categoryItems]}
+            <div class="category-block">
+              <div class="category-head">
+                <h4>{categoryName}</h4>
+                <span>{categoryItems.length} items</span>
               </div>
-            {/each}
-          </div>
+
+              <div class="gear-table">
+                <div class="gear-row header">
+                  <span>Item</span>
+                  <span>Qty</span>
+                  <span>Weight</span>
+                  <span>Total</span>
+                  <span></span>
+                </div>
+                {#each categoryItems as item}
+                  <div class="gear-row">
+                    <div class="gear-main">
+                      <strong>{item.name}</strong>
+                      <span>{item.brand || 'Unbranded'}</span>
+                    </div>
+                    <div class="qty-control">
+                      <input
+                        type="number"
+                        min="1"
+                        value={packQuantities[item.gearId] ?? item.quantity}
+                        on:input={(event) => handleQuantityInput(item.gearId, event)}
+                      />
+                      <button
+                        class="ghost"
+                        type="button"
+                        on:click={() => handleUpdateQuantity(item.gearId)}
+                        disabled={updateLoadingId === item.gearId}
+                      >
+                        {updateLoadingId === item.gearId ? 'Saving...' : 'Update'}
+                      </button>
+                    </div>
+                    <span>{formatWeight(item.weightGrams)}</span>
+                    <span>{formatWeight(item.weightGrams * item.quantity)}</span>
+                    <button
+                      class="ghost danger"
+                      type="button"
+                      on:click={() => handleRemoveGear(item.gearId)}
+                      disabled={removeLoadingId === item.gearId}
+                    >
+                      {removeLoadingId === item.gearId ? 'Removing...' : 'Remove'}
+                    </button>
+                  </div>
+                {/each}
+              </div>
+            </div>
+          {/each}
         {/if}
       {/if}
     </article>
@@ -651,9 +782,28 @@
     font-family: var(--font-display);
   }
 
-  .card-header p {
-    color: var(--ink-muted);
-    margin: 0 0 16px;
+  .actions {
+    margin-top: 14px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .top-gap {
+    margin-top: 18px;
+  }
+
+  .subpanel {
+    margin-top: 16px;
+    border: 1px solid rgba(15, 15, 15, 0.1);
+    border-radius: 16px;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .subpanel h3 {
+    margin: 0 0 10px;
+    font-size: 1rem;
   }
 
   .section-title {
@@ -667,6 +817,15 @@
   .form {
     display: grid;
     gap: 14px;
+  }
+
+  .form.two-col {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: end;
+  }
+
+  .form.two-col .full {
+    grid-column: 1 / -1;
   }
 
   label {
@@ -774,6 +933,25 @@
     gap: 12px;
   }
 
+  .category-block {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .category-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--ink-muted);
+  }
+
+  .category-head h4 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 1rem;
+  }
+
   .gear-row {
     display: grid;
     grid-template-columns: 1.4fr 1fr 0.8fr 0.8fr auto;
@@ -861,6 +1039,10 @@
 
   @media (max-width: 1100px) {
     .pack-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .form.two-col {
       grid-template-columns: minmax(0, 1fr);
     }
   }
