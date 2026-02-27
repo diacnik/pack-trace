@@ -4,8 +4,11 @@ import com.packtrace.dto.ClosetGearRequest;
 import com.packtrace.dto.ClosetGearResponse;
 import com.packtrace.dto.ClosetRequest;
 import com.packtrace.dto.ClosetResponse;
+import com.packtrace.dto.CreateAndAddGearToClosetRequest;
 import com.packtrace.model.Closet;
+import com.packtrace.model.Gear;
 import com.packtrace.mapper.ClosetMapper;
+import com.packtrace.mapper.GearMapper;
 import com.packtrace.service.ClosetService;
 import com.packtrace.validation.PositiveId;
 import io.quarkus.security.Authenticated;
@@ -123,6 +126,35 @@ public class ClosetResource {
         try {
             closetService.addGearToCloset(closetId, request.gearId(), request.quantity(), auth0Id);
             return Response.status(Response.Status.CREATED).build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
+    }
+
+    @POST
+    @Path("/{id}/gear/create")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createGearAndAddToCloset(@PathParam("id") @PositiveId Long closetId, @Valid CreateAndAddGearToClosetRequest request) {
+        String auth0Id = jwt.getSubject();
+        try {
+            Gear gear = new Gear();
+            gear.setName(request.name());
+            gear.setBrand(request.brand());
+            gear.setWeightGrams(request.weightGrams());
+            gear.setWebsiteURL(request.websiteURL());
+            gear.setCategory(request.category());
+
+            Gear createdGear = closetService.createGearAndAddToCloset(closetId, gear, request.quantity(), auth0Id);
+            return Response.status(Response.Status.CREATED)
+                    .entity(GearMapper.toResponse(createdGear))
+                    .build();
         } catch (SecurityException e) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse(e.getMessage()))

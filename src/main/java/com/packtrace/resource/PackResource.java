@@ -4,8 +4,11 @@ import com.packtrace.dto.PackGearRequest;
 import com.packtrace.dto.PackGearResponse;
 import com.packtrace.dto.PackRequest;
 import com.packtrace.dto.PackResponse;
+import com.packtrace.dto.CreateAndAddGearToPackRequest;
 import com.packtrace.model.Pack;
+import com.packtrace.model.Gear;
 import com.packtrace.mapper.PackMapper;
+import com.packtrace.mapper.GearMapper;
 import com.packtrace.service.PackService;
 import com.packtrace.validation.PositiveId;
 import io.quarkus.security.Authenticated;
@@ -123,6 +126,35 @@ public class PackResource {
         try {
             packService.addGearToPack(packId, request.gearId(), request.quantity(), auth0Id);
             return Response.status(Response.Status.CREATED).build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.FORBIDDEN)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        } catch (IllegalArgumentException e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity(new ErrorResponse(e.getMessage()))
+                    .build();
+        }
+    }
+
+    @POST
+    @Path("/{id}/gear/create")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response createGearAndAddToPack(@PathParam("id") @PositiveId Long packId, @Valid CreateAndAddGearToPackRequest request) {
+        String auth0Id = jwt.getSubject();
+        try {
+            Gear gear = new Gear();
+            gear.setName(request.name());
+            gear.setBrand(request.brand());
+            gear.setWeightGrams(request.weightGrams());
+            gear.setWebsiteURL(request.websiteURL());
+            gear.setCategory(request.category());
+
+            Gear createdGear = packService.createGearAndAddToPack(packId, gear, request.quantity(), auth0Id);
+            return Response.status(Response.Status.CREATED)
+                    .entity(GearMapper.toResponse(createdGear))
+                    .build();
         } catch (SecurityException e) {
             return Response.status(Response.Status.FORBIDDEN)
                     .entity(new ErrorResponse(e.getMessage()))

@@ -124,6 +124,13 @@ export async function addGearToCloset(closetId, payload) {
   });
 }
 
+export async function createGearAndAddToCloset(closetId, payload) {
+  return apiRequest(`/closet/${closetId}/gear/create`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
 export async function fetchPacks() {
   return apiRequest('/pack');
 }
@@ -158,6 +165,13 @@ export async function fetchPackGear(packId) {
 
 export async function addGearToPack(packId, payload) {
   return apiRequest(`/pack/${packId}/gear`, {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function createGearAndAddToPack(packId, payload) {
+  return apiRequest(`/pack/${packId}/gear/create`, {
     method: 'POST',
     body: JSON.stringify(payload)
   });

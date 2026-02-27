@@ -8,6 +8,7 @@
     deleteCloset,
     fetchClosetGear,
     addGearToCloset,
+    createGearAndAddToCloset,
     updateClosetGearQuantity,
     removeGearFromCloset,
     fetchGear,
@@ -65,6 +66,16 @@
 
   let selectedLibraryGearId = '';
   let addQuantity = 1;
+  let closetGearMode = 'library'; // 'library' | 'create'
+  let createAndAddToClosetLoading = false;
+  let newGearForCloset = {
+    name: '',
+    brand: '',
+    weightGrams: '',
+    websiteURL: '',
+    category: '',
+    quantity: 1
+  };
 
   onMount(async () => {
     await Promise.all([loadClosets(), loadGearLibrary()]);
@@ -356,6 +367,50 @@
     }
   }
 
+  function resetNewGearForCloset() {
+    newGearForCloset = {
+      name: '',
+      brand: '',
+      weightGrams: '',
+      websiteURL: '',
+      category: '',
+      quantity: 1
+    };
+  }
+
+  async function handleCreateGearAndAddToCloset() {
+    if (!selectedClosetId) {
+      pushToast('Select a closet first.', 'error');
+      return;
+    }
+
+    const payload = {
+      name: newGearForCloset.name?.trim(),
+      brand: newGearForCloset.brand?.trim() || null,
+      weightGrams: Number(newGearForCloset.weightGrams || 0),
+      websiteURL: newGearForCloset.websiteURL?.trim() || null,
+      category: newGearForCloset.category?.trim() || null,
+      quantity: Number(newGearForCloset.quantity || 1)
+    };
+
+    if (!payload.name) {
+      pushToast('Gear name is required.', 'error');
+      return;
+    }
+
+    createAndAddToClosetLoading = true;
+    try {
+      await createGearAndAddToCloset(selectedClosetId, payload);
+      await Promise.all([loadClosetGear(selectedClosetId), loadGearLibrary()]);
+      resetNewGearForCloset();
+      pushToast('Gear created and added to closet.', 'success');
+    } catch (error) {
+      pushToast(error.message || 'Unable to create gear.', 'error');
+    } finally {
+      createAndAddToClosetLoading = false;
+    }
+  }
+
   async function handleAddGearToCloset() {
     if (!selectedClosetId) {
       pushToast('Select a closet first.', 'error');
@@ -580,34 +635,81 @@
 
         <div class="section-title">Closet gear options</div>
 
-        <div class="form inline">
-          <label>
-            Gear library
-            <select bind:value={selectedLibraryGearId} disabled={gearLoading || gearLibrary.length === 0}>
-              {#if gearLoading}
-                <option>Loading gear...</option>
-              {:else if gearLibrary.length === 0}
-                <option value="">No gear yet</option>
-              {:else}
-                {#each gearLibrary as gear}
-                  <option value={String(gear.id)}>{gear.name} {gear.brand ? `• ${gear.brand}` : ''}</option>
-                {/each}
-              {/if}
-            </select>
-          </label>
-          <label>
-            Quantity
-            <input type="number" min="1" bind:value={addQuantity} />
-          </label>
-          <button
-            class="primary"
-            type="button"
-            on:click={handleAddGearToCloset}
-            disabled={addToClosetLoading || !selectedClosetId || gearLibrary.length === 0}
-          >
-            {addToClosetLoading ? 'Adding...' : 'Add to closet'}
-          </button>
+        <div class="mode-toggle">
+          <button type="button" class:active={closetGearMode === 'library'} on:click={() => (closetGearMode = 'library')}>From library</button>
+          <button type="button" class:active={closetGearMode === 'create'} on:click={() => (closetGearMode = 'create')}>Create new</button>
         </div>
+
+        {#if closetGearMode === 'library'}
+          <div class="form inline">
+            <label>
+              Gear library
+              <select bind:value={selectedLibraryGearId} disabled={gearLoading || gearLibrary.length === 0}>
+                {#if gearLoading}
+                  <option>Loading gear...</option>
+                {:else if gearLibrary.length === 0}
+                  <option value="">No gear yet</option>
+                {:else}
+                  {#each gearLibrary as gear}
+                    <option value={String(gear.id)}>{gear.name} {gear.brand ? `• ${gear.brand}` : ''}</option>
+                  {/each}
+                {/if}
+              </select>
+            </label>
+            <label>
+              Quantity
+              <input type="number" min="1" bind:value={addQuantity} />
+            </label>
+            <button
+              class="primary"
+              type="button"
+              on:click={handleAddGearToCloset}
+              disabled={addToClosetLoading || !selectedClosetId || gearLibrary.length === 0}
+            >
+              {addToClosetLoading ? 'Adding...' : 'Add to closet'}
+            </button>
+          </div>
+        {:else}
+          <div class="subpanel">
+            <h3>Create new gear & add to closet</h3>
+            <div class="form">
+              <label>
+                Name
+                <input type="text" bind:value={newGearForCloset.name} placeholder="Jetboil Flash" required />
+              </label>
+              <label>
+                Brand
+                <input type="text" bind:value={newGearForCloset.brand} placeholder="Jetboil" />
+              </label>
+              <label>
+                Weight (grams)
+                <input type="number" min="1" bind:value={newGearForCloset.weightGrams} placeholder="385" required />
+              </label>
+              <label>
+                Category
+                <input type="text" bind:value={newGearForCloset.category} placeholder="Cooking" />
+              </label>
+              <label>
+                Product URL
+                <input type="url" bind:value={newGearForCloset.websiteURL} placeholder="https://" />
+              </label>
+              <label>
+                Quantity
+                <input type="number" min="1" bind:value={newGearForCloset.quantity} />
+              </label>
+            </div>
+            <div class="actions">
+              <button
+                class="primary"
+                type="button"
+                on:click={handleCreateGearAndAddToCloset}
+                disabled={createAndAddToClosetLoading || !selectedClosetId}
+              >
+                {createAndAddToClosetLoading ? 'Creating...' : 'Create & add to closet'}
+              </button>
+            </div>
+          </div>
+        {/if}
 
         {#if closetGearLoading}
           <p class="muted">Loading closet gear...</p>
@@ -829,10 +931,38 @@
     grid-column: 1 / -1;
   }
 
+  .mode-toggle {
+    display: inline-flex;
+    gap: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 15, 15, 0.15);
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .mode-toggle button {
+    border: none;
+    background: transparent;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    color: var(--ink-muted);
+    cursor: pointer;
+  }
+
+  .mode-toggle button.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
   .form.inline {
-    grid-template-columns: 1.4fr 0.8fr auto;
+    grid-template-columns: minmax(0, 1fr) minmax(96px, 120px);
     align-items: end;
     margin-bottom: 18px;
+  }
+
+  .form.inline > button {
+    grid-column: 1 / -1;
+    width: 100%;
   }
 
   label {
@@ -845,6 +975,9 @@
   input,
   textarea,
   select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     border-radius: 12px;
     border: 1px solid rgba(15, 15, 15, 0.15);
     padding: 10px 12px;

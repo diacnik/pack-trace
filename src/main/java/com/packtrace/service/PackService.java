@@ -161,6 +161,28 @@ public class PackService {
     }
 
     @Transactional
+    public Gear createGearAndAddToPack(Long packId, Gear gear, int quantity, String auth0Id) {
+        // Verify pack ownership
+        Pack pack = packRepository.findById(packId)
+                .orElseThrow(() -> new IllegalArgumentException("Pack not found"));
+
+        Account account = accountService.findByAuth0Id(auth0Id)
+                .orElseThrow(() -> new SecurityException("Account not found."));
+
+        if (!pack.getAccountId().equals(account.getId())) {
+            throw new SecurityException("You do not own this pack");
+        }
+
+        // Create the gear
+        Gear createdGear = gearService.createGear(auth0Id, gear);
+
+        // Add it to the pack
+        packGearRepository.addGearToPack(packId, createdGear.getId(), quantity);
+
+        return createdGear;
+    }
+
+    @Transactional
     public void updatePackGearQuantity(Long packId, Long gearId, int quantity, String auth0Id) {
         Pack pack = packRepository.findById(packId)
                 .orElseThrow(() -> new IllegalArgumentException("Pack not found"));

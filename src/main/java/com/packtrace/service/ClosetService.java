@@ -166,6 +166,28 @@ public class ClosetService {
     }
 
     @Transactional
+    public Gear createGearAndAddToCloset(Long closetId, Gear gear, int quantity, String auth0Id) {
+        // Verify closet ownership
+        Closet closet = closetRepository.findById(closetId)
+                .orElseThrow(() -> new IllegalArgumentException("Closet not found"));
+
+        Account account = accountService.findByAuth0Id(auth0Id)
+                .orElseThrow(() -> new SecurityException("Account not found. Please login first."));
+
+        if (!closet.getAccountId().equals(account.getId())) {
+            throw new SecurityException("You do not own this closet");
+        }
+
+        // Create the gear
+        Gear createdGear = gearService.createGear(auth0Id, gear);
+
+        // Add it to the closet
+        closetGearRepository.addGearToCloset(closetId, createdGear.getId(), quantity);
+
+        return createdGear;
+    }
+
+    @Transactional
     public void updateClosetGearQuantity(Long closetId, Long gearId, int quantity, String auth0Id) {
         // Verify closet ownership
         Closet closet = closetRepository.findById(closetId)

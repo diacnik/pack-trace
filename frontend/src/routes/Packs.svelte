@@ -8,6 +8,7 @@
     deletePack,
     fetchPackGear,
     addGearToPack,
+    createGearAndAddToPack,
     updatePackGearQuantity,
     removeGearFromPack,
     fetchClosets,
@@ -61,6 +62,16 @@
 
   let addQuantity = 1;
   let packQuantities = {};
+  let showCreateGearForPack = false;
+  let createAndAddToPackLoading = false;
+  let newGearForPack = {
+    name: '',
+    brand: '',
+    weightGrams: '',
+    websiteURL: '',
+    category: '',
+    quantity: 1
+  };
 
   onMount(async () => {
     await Promise.all([loadPacks(), loadClosets(), loadGearLibrary()]);
@@ -303,6 +314,50 @@
       pushToast(error.message || 'Unable to delete pack.', 'error');
     } finally {
       deleteLoading = false;
+    }
+  }
+
+  function resetNewGearForPack() {
+    newGearForPack = {
+      name: '',
+      brand: '',
+      weightGrams: '',
+      websiteURL: '',
+      category: '',
+      quantity: 1
+    };
+  }
+
+  async function handleCreateGearAndAddToPack() {
+    if (!selectedPackId) {
+      pushToast('Select a pack first.', 'error');
+      return;
+    }
+
+    const payload = {
+      name: newGearForPack.name?.trim(),
+      brand: newGearForPack.brand?.trim() || null,
+      weightGrams: Number(newGearForPack.weightGrams || 0),
+      websiteURL: newGearForPack.websiteURL?.trim() || null,
+      category: newGearForPack.category?.trim() || null,
+      quantity: Number(newGearForPack.quantity || 1)
+    };
+
+    if (!payload.name) {
+      pushToast('Gear name is required.', 'error');
+      return;
+    }
+
+    createAndAddToPackLoading = true;
+    try {
+      await createGearAndAddToPack(selectedPackId, payload);
+      await Promise.all([loadPackGear(selectedPackId), loadGearLibrary()]);
+      resetNewGearForPack();
+      pushToast('Gear created and added to pack.', 'success');
+    } catch (error) {
+      pushToast(error.message || 'Unable to create gear.', 'error');
+    } finally {
+      createAndAddToPackLoading = false;
     }
   }
 
@@ -668,6 +723,55 @@
           {addLoading ? 'Adding...' : 'Add gear to pack'}
         </button>
       </div>
+
+      <div class="section-title">Or create new gear</div>
+      <div class="actions">
+        <button class="ghost" type="button" on:click={() => (showCreateGearForPack = !showCreateGearForPack)}>
+          {showCreateGearForPack ? 'Cancel' : 'Create new gear & add to pack'}
+        </button>
+      </div>
+
+      {#if showCreateGearForPack}
+        <div class="subpanel">
+          <h3>Create new gear & add to pack</h3>
+          <div class="form">
+            <label>
+              Name
+              <input type="text" bind:value={newGearForPack.name} placeholder="Jetboil Flash" required />
+            </label>
+            <label>
+              Brand
+              <input type="text" bind:value={newGearForPack.brand} placeholder="Jetboil" />
+            </label>
+            <label>
+              Weight (grams)
+              <input type="number" min="1" bind:value={newGearForPack.weightGrams} placeholder="385" required />
+            </label>
+            <label>
+              Category
+              <input type="text" bind:value={newGearForPack.category} placeholder="Cooking" />
+            </label>
+            <label>
+              Product URL
+              <input type="url" bind:value={newGearForPack.websiteURL} placeholder="https://" />
+            </label>
+            <label>
+              Quantity
+              <input type="number" min="1" bind:value={newGearForPack.quantity} />
+            </label>
+          </div>
+          <div class="actions">
+            <button
+              class="primary"
+              type="button"
+              on:click={handleCreateGearAndAddToPack}
+              disabled={createAndAddToPackLoading || !selectedPackId}
+            >
+              {createAndAddToPackLoading ? 'Creating...' : 'Create & add to pack'}
+            </button>
+          </div>
+        </div>
+      {/if}
     </article>
   </section>
 </main>
@@ -838,6 +942,9 @@
   input,
   textarea,
   select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     border-radius: 12px;
     border: 1px solid rgba(15, 15, 15, 0.15);
     padding: 10px 12px;
@@ -870,18 +977,13 @@
     border-radius: 999px;
   }
 
-  button.danger {
-    border: none;
-    background: #d24c4c;
-    color: white;
-    padding: 10px 16px;
-    border-radius: 999px;
-    font-weight: 600;
-  }
-
   button.ghost.danger {
+    border: 1px solid rgba(210, 76, 76, 0.4);
+    background: transparent;
     border-color: rgba(210, 76, 76, 0.4);
     color: #d24c4c;
+    padding: 8px 14px;
+    font-weight: inherit;
   }
 
   .pack-list {
